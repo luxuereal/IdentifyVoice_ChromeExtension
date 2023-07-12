@@ -30,44 +30,26 @@ function App() {
           const audioData = await response.arrayBuffer();
 
           // Decode the audio data into an AudioBuffer
-          const decodedData = await audioContext.decodeAudioData(audioData);
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const audioBuffer = await audioContext.decodeAudioData(audioData);
+          const audioChannelData = audioBuffer.getChannelData(0); // Assuming mono audio
+          const audioFloat32Array = new Float32Array(audioChannelData);
 
-          // Create an AudioBufferSourceNode
-          const source = audioContext.createBufferSource();
-          source.buffer = decodedData;
-
-          // Create an AnalyserNode
-          analyser = audioContext.createAnalyser();
-          analyser.fftSize = 2048;
-          const bufferLength = analyser.frequencyBinCount;
-          dataArray = new Uint8Array(bufferLength);
-
-          // Connect the source to the analyser
-          source.connect(analyser);
-
-          // Start audio processing
-          source.start();
+          performFFT(audioFloat32Array);
         } catch (error) {
           console.error('Error fetching audio:', error);
         }
       };
 
-      const handleFrame = () => {
+      const performFFT = (audioData) => {
         // Request animation frame to continuously update the audio data
-        requestAnimationFrame(handleFrame);
+        const fft = new FFT(audioData.length, audioData.sampleRate);
+        fft.forward(audioData);
+        const spectrum = fft.spectrum;
 
-        // Get the current frequency data
-        analyser.getByteFrequencyData(dataArray);
-
-        // Perform FFT operations on the data using dsp.js
-        const fft = new FFT(dataArray.length, audioContext.sampleRate);
-        fft.forward(dataArray);
-
-        // Access the frequency data after FFT processing
-        const frequencyData = fft.spectrum;
-
-        // Your FFT code goes here...
-        console.log(frequencyData); // Example: Log the frequency data to the console
+        // Generate signature from the spectrum data
+        const signature = spectrum.map((value) => Math.abs(value));
+        console.log(signature);
       };
 
       handleAudio();
