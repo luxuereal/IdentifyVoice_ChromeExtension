@@ -9,6 +9,8 @@ function App() {
 
   const [voiceData, setVoiceData] = useState([]);
 
+  const [similarity, setSimilarity] = useState('');
+
   const clickBtn = async () => {
     setCaptureState((prevState) => !prevState);
     if (captureState)
@@ -85,10 +87,6 @@ function App() {
       new Array(numChannels).fill(0).map((e, i) => frequencyDomainDataArray[i][j]).reduce((t,n) => t + n) / numChannels
     )
 
-
-    // Generate a signature by joining the frequency-domain data of all channels
-    // const signature = combinedFrequencyDomainDataArray.flat().join(',');
-
     return generateHashes(combinedFrequencyDomainDataArray);
   }
 
@@ -132,6 +130,7 @@ function App() {
       result.push(value);
     }
     console.log("Similarity: " + Math.max(...result));
+    setSimilarity(((1 - Math.max(...result))*100).toFixed(8));
   }
 
   return (
@@ -159,6 +158,7 @@ function App() {
             voiceData.length === 2 && captureState &&
               <button className='mt-6 w-full px-4 py-2 text-base text-red-500 border border-red-500' onClick={compare}>Compare</button>
           }
+          <h2 className='text-center mt-6 text-base text-green-500'>{similarity !== '' && `Similarity:  ${similarity}%`}</h2>
         </div>
       </div>
     </div>
